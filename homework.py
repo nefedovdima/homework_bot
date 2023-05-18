@@ -68,6 +68,7 @@ def get_api_answer(timestamp):
                           f'Ваш код: {homework_statuses.status_code}')
             raise Exception(f'При обращении к API '
                             f'получен код отличный от 200. '
+                            f'получен код отличный от 200. '
                             f'Ваш код: {homework_statuses.status_code}')
 
         logging.debug('Успешное обращение к эндпоинту')
@@ -87,9 +88,11 @@ def check_response(response):
                      ' ответ API приходит не в виде словаря')
         raise TypeError('Ответ API не соответствует документации: ответ API'
                         'приходит не в виде словаря')
-    if not response.get('homeworks'):
+    if 'homeworks' not in response:
+        v = response.get('homeworks')
         logging.error(f'Ответ API не соответствует документации: '
-                      f'в ответе API нет ключа "homeworks": {response}')
+                      f'в ответе API нет ключа "homeworks": '
+                      f' {response}')
         raise TypeError('Ответ API не соответствует документации: '
                         'в ответе API нет ключа "homeworks"')
     if not isinstance(response['homeworks'], list):
@@ -104,7 +107,7 @@ def check_response(response):
 
 
 def parse_status(homework: dict):
-    """Проыеряет корректность статуса работы."""
+    """Проверяет корректность статуса работы."""
     status = homework.get('status')
     if status in HOMEWORK_VERDICTS:
         try:
@@ -139,10 +142,11 @@ def main():
             else:
                 logging.debug('Статус дз не обновился')
             from_date = response['current_date']
-            time.sleep(RETRY_PERIOD)
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.error(message)
+        finally:
+            time.sleep(RETRY_PERIOD)
 
 
 if __name__ == '__main__':
