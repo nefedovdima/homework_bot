@@ -89,7 +89,6 @@ def check_response(response):
         raise TypeError('Ответ API не соответствует документации: ответ API'
                         'приходит не в виде словаря')
     if 'homeworks' not in response:
-        v = response.get('homeworks')
         logging.error(f'Ответ API не соответствует документации: '
                       f'в ответе API нет ключа "homeworks": '
                       f' {response}')
