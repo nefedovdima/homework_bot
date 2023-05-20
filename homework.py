@@ -1,12 +1,13 @@
-import os
 import logging
-import time
+import os
 import sys
+import time
+
 import requests
 import telegram
-from exceptions import (CheckTokensError,
-                        IncorrectHomeworkStatus)
 from dotenv import load_dotenv
+
+from exceptions import CheckTokensError, IncorrectHomeworkStatus
 
 load_dotenv()
 logging.basicConfig(
