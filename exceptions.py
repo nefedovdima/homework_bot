@@ -11,3 +11,7 @@ class GetApiAnswerError(Exception):
 
 class IncorrectHomeworkStatus(Exception):
     """Неккорректный статус ДЗ."""
+
+
+class WrongStatusCodeError(Exception):
+    """Код ответа отличен от 200."""

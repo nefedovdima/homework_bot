@@ -32,11 +32,7 @@ HOMEWORK_VERDICTS = {
 
 def check_tokens():
     """Проверяет существование токенов."""
-    if not all((PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID)):
-        logging.critical('CheckTokensError: Отсутствие '
-                         'обязательных переменных окружения')
-        raise CheckTokensError('Отсутствие обязательных переменных окружения')
-    logging.debug('Проверка токенов прошла успешно')
+    return all((PRACTICUM_TOKEN, TELEGRAM_TOKEN, TELEGRAM_CHAT_ID))
 
 
 def send_message(bot, message):
@@ -64,7 +60,6 @@ def get_api_answer(timestamp):
                             f'получен код отличный от 200. '
                             f'получен код отличный от 200. '
                             f'Ваш код: {homework_statuses.status_code}')
-
         logging.debug('Успешное обращение к эндпоинту')
         return homework_statuses.json()
     except requests.RequestException:
@@ -102,27 +97,36 @@ def check_response(response):
 def parse_status(homework: dict):
     """Проверяет корректность статуса работы."""
     status = homework.get('status')
-    if status in HOMEWORK_VERDICTS:
-        try:
-            homework_name = homework['homework_name']
-        except KeyError:
-            logging.error('KeyError: в ответе API'
-                          ' домашки нет ключа homework_name')
+    if status not in HOMEWORK_VERDICTS:
+        logging.error('Некорректный статус домашней работы')
+        send_message(telegram.Bot(token=TELEGRAM_TOKEN),
+                     'IncorrectHomeworkStatus: '
+                     'Некорректный статус работы')
+        raise IncorrectHomeworkStatus('Некорректный статус работы')
+    elif 'homework_name' not in homework:
+        logging.error('KeyError: в ответе API'
+                      ' домашки нет ключа homework_name')
+        raise KeyError('В ответе API'
+                       ' домашки нет ключа homework_name')
+    else:
+        homework_name = homework['homework_name']
         verdict = HOMEWORK_VERDICTS[status]
         return f'Изменился статус проверки работы "{homework_name}". {verdict}'
-    logging.error('Некорректный статус домашней работы')
-    send_message(telegram.Bot(token=TELEGRAM_TOKEN),
-                 'IncorrectHomeworkStatus: '
-                 'Некорректный статус работы')
-    raise IncorrectHomeworkStatus('Некорректный статус работы')
 
 
 def main():
     """Запсукает работу бота."""
-    check_tokens()
+    if check_tokens():
+        logging.debug('Проверка токенов прошла успешно')
+    else:
+        logging.critical('CheckTokensError: Отсутствие '
+                         'обязательных переменных окружения')
+        raise CheckTokensError('Отсутствие обязательных переменных окружения')
+
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
     from_date = timestamp - RETRY_PERIOD
+    prev_error = ''
     while True:
         try:
             response = get_api_answer(from_date)
@@ -136,8 +140,11 @@ def main():
                 logging.debug('Статус дз не обновился')
             from_date = response['current_date']
         except Exception as error:
-            message = f'Сбой в работе программы: {error}'
-            logging.error(message)
+            if error != prev_error:
+                message = f'Сбой в работе программы: {error}'
+                logging.error(message)
+                send_message(bot, message)
+                prev_error = error
         finally:
             time.sleep(RETRY_PERIOD)
 
