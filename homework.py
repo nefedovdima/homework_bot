@@ -137,9 +137,9 @@ def main():
             logging.error(f'Ответ API не соответствует документации: '
                           f' {response}')
         except Exception as error:
+            message = f'Сбой в работе программы: {error}'
             logging.error(message)
             if error != prev_error:
-                message = f'Сбой в работе программы: {error}'
                 send_message(bot, message)
                 prev_error = error
         finally:
