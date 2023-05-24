@@ -78,15 +78,9 @@ def check_response(response):
         raise TypeError('Ответ API не соответствует документации: ответ API'
                         'приходит не в виде словаря')
     if 'homeworks' not in response:
-        logging.error(f'Ответ API не соответствует документации: '
-                      f'в ответе API нет ключа "homeworks": '
-                      f' {response}')
         raise TypeError('Ответ API не соответствует документации: '
                         'в ответе API нет ключа "homeworks"')
     if not isinstance(response['homeworks'], list):
-        logging.error('Ответ API не соответствует документации: '
-                      'в ответе API домашки под ключом "homeworks" '
-                      'данные приходят не в виде списка')
         raise TypeError('Ответ API не соответствует документации: '
                         'в ответе API домашки под ключом "homeworks" '
                         'данные приходят не в виде списка')
@@ -139,10 +133,13 @@ def main():
             else:
                 logging.debug('Статус дз не обновился')
             from_date = response['current_date']
+        except TypeError:
+            logging.error(f'Ответ API не соответствует документации: '
+                          f' {response}')
         except Exception as error:
+            logging.error(message)
             if error != prev_error:
                 message = f'Сбой в работе программы: {error}'
-                logging.error(message)
                 send_message(bot, message)
                 prev_error = error
         finally:
