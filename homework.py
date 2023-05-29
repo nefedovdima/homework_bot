@@ -53,9 +53,6 @@ def get_api_answer(timestamp):
                                          headers=HEADERS,
                                          params=payload)
         if homework_statuses.status_code != HTTPStatus.OK:
-            logging.error(f'При обращении к '
-                          f'API получен код отличный от 200. '
-                          f'Ваш код: {homework_statuses.status_code}')
             raise Exception(f'При обращении к API '
                             f'получен код отличный от 200. '
                             f'получен код отличный от 200. '
@@ -92,14 +89,11 @@ def parse_status(homework: dict):
     """Проверяет корректность статуса работы."""
     status = homework.get('status')
     if status not in HOMEWORK_VERDICTS:
-        logging.error('Некорректный статус домашней работы')
         send_message(telegram.Bot(token=TELEGRAM_TOKEN),
                      'IncorrectHomeworkStatus: '
                      'Некорректный статус работы')
         raise IncorrectHomeworkStatus('Некорректный статус работы')
     elif 'homework_name' not in homework:
-        logging.error('KeyError: в ответе API'
-                      ' домашки нет ключа homework_name')
         raise KeyError('В ответе API'
                        ' домашки нет ключа homework_name')
     else:
@@ -136,6 +130,11 @@ def main():
         except TypeError:
             logging.error(f'Ответ API не соответствует документации: '
                           f' {response}')
+        except IncorrectHomeworkStatus:
+            logging.error('Некорректный статус домашней работы')
+        except KeyError:
+            logging.error('KeyError: в ответе API'
+                          ' домашки нет ключа homework_name')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.error(message)
