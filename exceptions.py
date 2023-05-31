@@ -15,3 +15,7 @@ class IncorrectHomeworkStatus(Exception):
 
 class WrongStatusCodeError(Exception):
     """Код ответа отличен от 200."""
+
+
+class RequestError(Exception):
+    """Ошибка запроса."""

@@ -8,7 +8,7 @@ import telegram
 from dotenv import load_dotenv
 from http import HTTPStatus
 
-from exceptions import CheckTokensError, IncorrectHomeworkStatus
+from exceptions import CheckTokensError, IncorrectHomeworkStatus, RequestError
 from endpoints import ENDPOINT
 
 load_dotenv()
@@ -60,8 +60,8 @@ def get_api_answer(timestamp):
         logging.debug('Успешное обращение к эндпоинту')
         return homework_statuses.json()
     except requests.RequestException:
-        logging.error('Недоступность эндпоинта '
-                      'или другие ошибки при запросе к эндпоинту')
+        raise RequestError('Недоступность эндпоинта '
+                           'или другие ошибки при запросе к эндпоинту')
 
 
 def check_response(response):
@@ -127,6 +127,9 @@ def main():
             else:
                 logging.debug('Статус дз не обновился')
             from_date = response['current_date']
+        except RequestError:
+            logging.error('Недоступность эндпоинта '
+                          'или другие ошибки при запросе к эндпоинту')
         except TypeError:
             logging.error(f'Ответ API не соответствует документации: '
                           f' {response}')
