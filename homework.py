@@ -110,7 +110,6 @@ def main():
         logging.critical('CheckTokensError: Отсутствие '
                          'обязательных переменных окружения')
         raise CheckTokensError('Отсутствие обязательных переменных окружения')
-
     bot = telegram.Bot(token=TELEGRAM_TOKEN)
     timestamp = int(time.time())
     from_date = timestamp - RETRY_PERIOD
@@ -133,8 +132,6 @@ def main():
         except TypeError:
             logging.error(f'Ответ API не соответствует документации: '
                           f' {response}')
-        except IncorrectHomeworkStatus:
-            logging.error('Некорректный статус домашней работы')
         except KeyError:
             logging.error('KeyError: в ответе API'
                           ' домашки нет ключа homework_name')
