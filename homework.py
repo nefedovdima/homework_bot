@@ -55,7 +55,6 @@ def get_api_answer(timestamp):
         if homework_statuses.status_code != HTTPStatus.OK:
             raise Exception(f'При обращении к API '
                             f'получен код отличный от 200. '
-                            f'получен код отличный от 200. '
                             f'Ваш код: {homework_statuses.status_code}')
         logging.debug('Успешное обращение к эндпоинту')
         return homework_statuses.json()
@@ -67,11 +66,6 @@ def get_api_answer(timestamp):
 def check_response(response):
     """Проверяет ответ API на соответствие документации."""
     if not isinstance(response, dict):
-        logging.error('Ответ API не соответствует документации: ответ API'
-                      'приходит не в виде словаря')
-        send_message(telegram.Bot(token=TELEGRAM_TOKEN),
-                     'TypeError: Ответ API не соответствует документации:'
-                     ' ответ API приходит не в виде словаря')
         raise TypeError('Ответ API не соответствует документации: ответ API'
                         'приходит не в виде словаря')
     if 'homeworks' not in response:
@@ -93,13 +87,12 @@ def parse_status(homework: dict):
                      'IncorrectHomeworkStatus: '
                      'Некорректный статус работы')
         raise IncorrectHomeworkStatus('Некорректный статус работы')
-    elif 'homework_name' not in homework:
+    if 'homework_name' not in homework:
         raise KeyError('В ответе API'
                        ' домашки нет ключа homework_name')
-    else:
-        homework_name = homework['homework_name']
-        verdict = HOMEWORK_VERDICTS[status]
-        return f'Изменился статус проверки работы "{homework_name}". {verdict}'
+    homework_name = homework['homework_name']
+    verdict = HOMEWORK_VERDICTS[status]
+    return f'Изменился статус проверки работы "{homework_name}". {verdict}'
 
 
 def main():
@@ -114,6 +107,7 @@ def main():
     timestamp = int(time.time())
     from_date = timestamp - RETRY_PERIOD
     prev_error = ''
+    prev_message = ''
     while True:
         try:
             response = get_api_answer(from_date)
@@ -122,19 +116,14 @@ def main():
             if homeworks:
                 homework = homeworks[0]
                 status = parse_status(homework)
-                send_message(bot, status)
+                message = status
+                if prev_message != message:
+                    send_message(bot, message)
+                    prev_message = message
             else:
+
                 logging.debug('Статус дз не обновился')
             from_date = response['current_date']
-        except RequestError:
-            logging.error('Недоступность эндпоинта '
-                          'или другие ошибки при запросе к эндпоинту')
-        except TypeError:
-            logging.error(f'Ответ API не соответствует документации: '
-                          f' {response}')
-        except KeyError:
-            logging.error('KeyError: в ответе API'
-                          ' домашки нет ключа homework_name')
         except Exception as error:
             message = f'Сбой в работе программы: {error}'
             logging.error(message)
